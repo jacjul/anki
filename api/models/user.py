@@ -8,6 +8,8 @@ class User(Base):
 
     id:Mapped[int] = mapped_column(primary_key = True)
     name: Mapped[str] = mapped_column(String(40))
-    last_name:Mapped[str] = mapped_column(String(40))
+    lastname:Mapped[str] = mapped_column(String(40))
+    username: Mapped[str] = mapped_column(unique =True)
     email:Mapped[str] = mapped_column(unique=True)
     hashed_password:Mapped[str] 
+    
