@@ -33,14 +33,14 @@ def create_access_token(data:dict, expiry_minutes=ACCESS_TOKEN_EXPIRE_MINUTES)->
 
     return access_token
 
-def create_refresh_token(data:dict, expiry_days=REFRESH_TOKEN_EXPIRE_DAYS)->tuple[str,uuid.UUID]:
+def create_refresh_token(data:dict, expiry_days=REFRESH_TOKEN_EXPIRE_DAYS)->tuple[str,uuid.UUID,datetime]:
     to_encode = data.copy()
     jti = uuid.uuid4()
     exp = datetime.now() + timedelta(days=expiry_days)
     to_encode.update({"exp":exp, "jti":jti})
 
     refresh_token=jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return refresh_token,jti
+    return refresh_token,jti,exp
 
 def hash_refresh_token(token:str):
     return hashlib.sha256(token.encode()).hexdigest()
@@ -48,5 +48,5 @@ def hash_refresh_token(token:str):
 def validate_refresh_token(plain,hashed):
     return hash_refresh_token(plain) == hashed
 
-def decode_refresh_token(token:str)->dict:
+def decode_token(token:str)->dict:
     return jwt.decode(token, SECRET_KEY,algorithms =ALGORITHM)
