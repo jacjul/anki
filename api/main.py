@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.db.database import Base, engine
 from api.routes.card import card_router
 from api.routes.deck import deck_router
-from api.routes.user import user_router
+from api.auth.user import auth_router
 from api.logger import logger 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 ## adding the routes 
 app.include_router(card_router,prefix="/api", tags=["card"])
 app.include_router(deck_router, prefix="/api")
-app.include_router(user_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 
 ##adding the CORS-MW
 origins = ["http://localhost:5173"]
