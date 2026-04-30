@@ -7,9 +7,11 @@ from api.db.database import Base, engine
 from api.routes.card import card_router
 from api.routes.deck import deck_router
 from api.auth.user import auth_router
+from api.core.settings import settings
 from api.logger import logger 
-app = FastAPI()
 
+
+app = FastAPI()
 
 ## run only once when run directly
 if __name__ == "__main__":
@@ -21,9 +23,7 @@ app.include_router(deck_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 
 ##adding the CORS-MW
-origins = ["http://localhost:5173"]
-
-app.add_middleware(CORSMiddleware, allow_origins=origins, 
+app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ALLOWED_ORIGINS, 
                    allow_credentials = True , allow_methods=["*"], allow_headers=["*"])
 
 ### Logging 
@@ -51,3 +51,7 @@ async def log_unexpected_errors(request:Request, exc:Exception):
 async def log_http_exception(request:Request, exc:HTTPException):
     logger.warning(f"HTTPException: {request.url.path} - {request.method} -{exc.status_code} - {exc.detail}")
     return JSONResponse( status_code =exc.status_code, content={"detail":exc.detail}, headers=exc.headers)
+
+
+# to retrieve real IP address of client
+# uvicorn api.main:app --proxy-headers --forwarded-allow-ips="127.0.0.1,<your-proxy-ip-or-network>"

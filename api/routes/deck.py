@@ -6,11 +6,12 @@ from sqlalchemy import select
 from api.db.database import get_db
 from api.models.deck import Deck 
 from api.schemas.deck import CreateDeck,UpdateDeck,ActionDeck
-deck_router = APIRouter(prefix="deck")
+deck_router = APIRouter(prefix="/deck")
 
 @deck_router.post("/create")
 def create_deck(deck:CreateDeck , db:Session = Depends(get_db)):
-    new_deck = Deck(*deck)
+    deck_dict = deck.model_dump()
+    new_deck = Deck(**deck_dict)
 
     try:
         db.add(new_deck)
