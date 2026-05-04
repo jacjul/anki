@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from api.db.database import Base
 if TYPE_CHECKING:
     from api.models.userdeck import UserDecks
+    from api.models.deck import Deck
+
 
 
 class User(Base):
@@ -16,5 +18,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(unique =True)
     email:Mapped[str] = mapped_column(unique=True)
     hashed_password:Mapped[str] 
-    user_memberships:Mapped[list[UserDecks]] = relationship(back_populates="user")
+    user_memberships:Mapped[list["UserDecks"]] = relationship("UserDecks", back_populates="user")
+    decks_owned:Mapped[list["Deck"]] = relationship("Deck", back_populates="owner")
+
 

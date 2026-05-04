@@ -10,12 +10,12 @@ from api.auth.user import auth_router
 from api.core.settings import settings
 from api.logger import logger 
 
-
 app = FastAPI()
 
 ## run only once when run directly
+"""
 if __name__ == "__main__":
-    Base.metadata.create_all(bind =engine)
+    Base.metadata.create_all(bind =engine)"""
 
 ## adding the routes 
 app.include_router(card_router,prefix="/api", tags=["card"])
@@ -29,7 +29,6 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ALLOWED_ORIGINS,
 ### Logging 
 @app.middleware("http")
 async def create_logging(request, call_next):
-    
     start_time = time()
     status_code = 500
     try:

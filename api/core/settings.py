@@ -7,11 +7,22 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file="api/.env", extra="ignore")
 
     ENV: str = "dev"
-
+    DATABASE_URL : str
     SECRET_KEY: str
+
+    CSRF_COOKIE_NAME: str ="csrf_token"
+    CSRF_HEADER_NAME: str = "x-csrf-token"
+
+    REDIS_URL : str = "redis://localhost:6379/0"
+    RATE_LIMIT_PREFIX :str ="anki"
+    LOGIN_RATE_LIMIT_ATTEMPTS: int = 5
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    
+    
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     ALGORITHM: str = "HS256"
+
 
     TRUSTED_PROXY_IPS: list[str] = ["127.0.0.1", "::1"]
     CORS_ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]

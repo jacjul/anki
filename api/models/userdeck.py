@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column,relationship
 from sqlalchemy import Enum as SAEnum, UniqueConstraint,ForeignKey
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum 
 from typing import TYPE_CHECKING
 
@@ -23,7 +23,7 @@ class UserDecks(Base):
 
     role:Mapped[EditorType] = mapped_column(SAEnum(EditorType),default=EditorType.viewer)
 
-    joined_at:Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    joined_at:Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     user:Mapped[User] = relationship(back_populates="user_memberships")
     deck:Mapped[Deck] = relationship(back_populates="deck_memberships")

@@ -1,40 +1,65 @@
 from fastapi import APIRouter,Depends,HTTPException
 from sqlalchemy.orm  import Session
-from sqlalchemy import select
+from typing import Annotated
+
+from sqlalchemy import select, and_
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from api.models.card import Card
 from api.models.deck import Deck
+from api.models.user import User 
+from api.models.userdeck import UserDecks, EditorType
+from api.auth.user import get_current_user
 from api.db.database import get_db
-from api.schemas.card import CreateCard
+from api.schemas.card import CreateCard, CardResponse
+from api.schemas.common import MessageResponse
 
 card_router = APIRouter(prefix="/card")
 
-@card_router.get("/all")
-def get_all_cards(db:Session=Depends(get_db)):
 
-    stmt = select(Card)
 
-    result = db.execute(stmt).mappings().all()
+@card_router.get("/all/{deck_id}", response_model=list[CardResponse])
+def get_all_cards_deck(deck_id: int, user: Annotated[User, Depends(get_current_user)], db: Session = Depends(get_db)):
+    available_deck = db.execute(select(Deck).where(Deck.id == deck_id)).scalar_one_or_none()
 
-    return [dict(card) for card in result]
+    if available_deck is None:
+        raise HTTPException(status_code=404, detail="Deck does not exist")
 
-@card_router.get("/all/{deck_id}")
-def get_all_cards_deck(deck_id:int, db:Session=Depends(get_db)):
-    stmt = select(Card).where(Card.deck_id ==deck_id)
+    if not available_deck.public and available_deck.owner_id != user.id:
+        is_member = db.execute(
+            select(UserDecks.id).where(
+                and_(
+                    UserDecks.deck_id == deck_id,
+                    UserDecks.user_id == user.id,
+                )
+            )
+        ).scalar_one_or_none()
+        if is_member is None:
+            raise HTTPException(status_code=403, detail="You are not allowed to view this private deck")
 
-    result = db.execute(stmt).mappings().all()
+    cards = db.execute(select(Card).where(Card.deck_id == deck_id)).scalars().all()
+    return cards
 
-    return [dict(card) for card in result]
+@card_router.post("/create", response_model=MessageResponse)
+def create_card(card: CreateCard, user: Annotated[User, Depends(get_current_user)], db: Session = Depends(get_db)):
 
-@card_router.post("/create")
-def create_card(card:CreateCard, db:Session=Depends(get_db)):
+    deck_exists = db.execute(select(Deck).where(Deck.id == card.deck_id)).scalar_one_or_none()
 
-    
-    deck_exists = db.execute(select(Deck.id).where(Deck.id == card.deck_id)).scalar_one_or_none()
-
-    if  deck_exists is None:
+    if deck_exists is None:
         raise HTTPException(status_code = 404, detail="Deck doesn't exist")
+
+    can_edit = db.execute(
+        select(UserDecks.id).where(
+            and_(
+                UserDecks.deck_id == card.deck_id,
+                UserDecks.user_id == user.id,
+                UserDecks.role.in_([EditorType.owner, EditorType.editor]),
+            )
+        )
+    ).scalar_one_or_none()
+
+    if deck_exists.owner_id != user.id and can_edit is None:
+        raise HTTPException(status_code=403, detail="You are not allowed to edit this deck")
     
     new_card = Card(frontside = card.frontside, 
                 frontside_explain=card.frontside_explain,
@@ -48,7 +73,7 @@ def create_card(card:CreateCard, db:Session=Depends(get_db)):
         db.add(new_card)
         db.commit()
         db.refresh(new_card)
-        return {"message":"Success"}
+        return {"message": "Success"}
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code = 409,detail="Card could not be created to data error")
